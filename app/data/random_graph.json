@@ -1,0 +1,33 @@
+{
+    "directed": true,
+    "multigraph": false,
+    "graph": {},
+    "nodes": [
+        {"id": "V4V6G"}, {"id": "Y8V2L"}, {"id": "T9B3T"}, {"id": "S8B8T"},
+        {"id": "M9G6H"}, {"id": "D4B4J"}, {"id": "R2V3F"}, {"id": "K8N5P"},
+        {"id": "F6Z4N"}, {"id": "P7L7X"}, {"id": "W5C5B"}, {"id": "Q1N9V"},
+        {"id": "X3Z3C"}, {"id": "U7P1R"}, {"id": "A2M8S"}
+    ],
+    "links": [
+        {"source": "V4V6G", "target": "Y8V2L", "weight": 2.3},
+        {"source": "Y8V2L", "target": "T9B3T", "weight": 1.8},
+        {"source": "T9B3T", "target": "S8B8T", "weight": 3.1},
+        {"source": "S8B8T", "target": "M9G6H", "weight": 0.9},
+        {"source": "M9G6H", "target": "D4B4J", "weight": 4.5},
+        {"source": "D4B4J", "target": "R2V3F", "weight": 2.0},
+        {"source": "R2V3F", "target": "K8N5P", "weight": 1.2},
+        {"source": "K8N5P", "target": "F6Z4N", "weight": 3.7},
+        {"source": "F6Z4N", "target": "P7L7X", "weight": 1.1},
+        {"source": "P7L7X", "target": "W5C5B", "weight": 2.8},
+        {"source": "W5C5B", "target": "Q1N9V", "weight": 4.2},
+        {"source": "Q1N9V", "target": "X3Z3C", "weight": 1.5},
+        {"source": "X3Z3C", "target": "U7P1R", "weight": 3.3},
+        {"source": "U7P1R", "target": "A2M8S", "weight": 0.7},
+        {"source": "A2M8S", "target": "V4V6G", "weight": 5.0},
+        {"source": "V4V6G", "target": "T9B3T", "weight": 1.0},
+        {"source": "Y8V2L", "target": "S8B8T", "weight": 2.5},
+        {"source": "T9B3T", "target": "M9G6H", "weight": 3.5},
+        {"source": "S8B8T", "target": "D4B4J", "weight": 1.3},
+        {"source": "M9G6H", "target": "R2V3F", "weight": 2.8}
+    ]
+}

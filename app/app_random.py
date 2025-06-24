@@ -2,12 +2,10 @@ import streamlit as st
 import networkx as nx
 from pyvis.network import Network
 import streamlit.components.v1 as components
+import random
 import string
 import os
 from networkx.algorithms import community as nx_comm
-from networkx.readwrite import json_graph
-import json
-import random
 
 # Set Streamlit page configuration
 st.set_page_config(layout="wide", page_title="Interactive Graph Visualization")
@@ -39,35 +37,18 @@ def inject_click_handler(html_source):
     # Inject the script just before the closing body tag
     return html_source.replace("</body>", js_code + "</body>")
 
-# --- Graph Loading and Setup ---
-def setup_default_graph(data_folder="data", filename="default_graph.json"):
-    """Creates a default graph JSON file if it doesn't exist."""
-    file_path = os.path.join(data_folder, filename)
-    if not os.path.exists(file_path):
-        st.info(f"Creating a default graph file at '{file_path}'...")
-        os.makedirs(data_folder, exist_ok=True)
-        
-        # Create a sample graph
-        G_sample = nx.DiGraph()
-        G_sample.add_edges_from([
-            ("A", "B"), ("A", "C"), ("B", "D"), ("C", "D"), ("D", "E"),
-            ("E", "F"), ("E", "G"), ("F", "H"), ("I", "J"), ("J", "A"),
-            ("K", "A"), ("L", "C"), ("C", "M")
-        ])
-        for u, v in G_sample.edges():
-            G_sample.edges[u,v]['weight'] = round(random.uniform(1.0, 5.0), 2)
-
-        graph_json = json_graph.node_link_data(G_sample)
-        with open(file_path, 'w') as f:
-            json.dump(graph_json, f, indent=4)
-    return file_path
-
+# --- Graph Generation ---
 @st.cache_data
-def load_graph(file_path):
-    """Loads a graph from a node-link JSON file."""
-    with open(file_path, 'r') as f:
-        data = json.load(f)
-    return json_graph.node_link_graph(data, directed=True, multigraph=False)
+def generate_random_graph(num_nodes=50, num_edges=75):
+    """Generates a random directed graph with specified number of nodes and edges."""
+    G = nx.DiGraph()
+    node_names = [''.join(random.choices(string.ascii_uppercase + string.digits, k=5)) for _ in range(num_nodes)]
+    G.add_nodes_from(node_names)
+    for _ in range(num_edges):
+        source, target = random.sample(node_names, 2)
+        if not G.has_edge(source, target):
+            G.add_edge(source, target, weight=round(random.uniform(0.1, 5.0), 2))
+    return G
 
 # --- Layout and Community Caching ---
 @st.cache_data
@@ -86,42 +67,32 @@ def get_spring_pos(_graph):
     return nx.spring_layout(_graph, seed=42)
 
 # --- State Management for Click-to-Select ---
+# Read node ID from query params if a node was clicked
 clicked_node = st.query_params.get("select_node")
 if clicked_node:
+    # If a node was clicked, update the session state
     st.session_state.selected_node = clicked_node
+    # Clear the query param to prevent getting stuck in a loop
     st.query_params.clear()
+
+if 'graph' not in st.session_state:
+    st.session_state.graph = generate_random_graph()
+    st.session_state.selected_node = None # Ensure it is initialized
+
+G = st.session_state.graph
+node_list = [""] + sorted(list(G.nodes()))  # Add "" for "no selection"
 
 # --- Sidebar Controls ---
 st.sidebar.header("Controls")
 
-# Widget to select graph file
-data_dir = "data"
-os.makedirs(data_dir, exist_ok=True)
-json_files = [f for f in os.listdir(data_dir) if f.endswith('.json')]
-if not json_files:
-    setup_default_graph(data_dir)
-    json_files = [f for f in os.listdir(data_dir) if f.endswith('.json')]
-
-selected_file = st.sidebar.selectbox(
-    "Select a graph file:",
-    json_files,
-    key="selected_file_widget"
-)
-
-# Load graph based on selection and manage state
-if 'graph' not in st.session_state or st.session_state.get('current_file') != selected_file:
+if st.sidebar.button("Generate New Random Graph"):
     get_greedy_modularity_communities.clear()
     get_kamada_kawai_pos.clear()
     get_spring_pos.clear()
-    
-    file_path = os.path.join(data_dir, selected_file)
-    st.session_state.graph = load_graph(file_path)
-    st.session_state.current_file = selected_file
+    st.session_state.graph = generate_random_graph()
     st.session_state.selected_node = None
+    st.session_state.search_query = ""
     st.rerun()
-
-G = st.session_state.graph
-node_list = [""] + sorted(list(G.nodes()))
 
 st.sidebar.markdown("---")
 
@@ -139,13 +110,15 @@ hide_source_neighbors = st.sidebar.toggle(
 
 st.sidebar.markdown("---")
 
+# Node Search
 search_query = st.sidebar.text_input("Search for a node:", key="search_query")
 filtered_nodes = [node for node in node_list if search_query.lower() in node.lower()] if search_query else node_list
 
+# Node Selection Dropdown (synced with session state)
 try:
     current_index = filtered_nodes.index(st.session_state.get("selected_node", ""))
 except ValueError:
-    current_index = 0
+    current_index = 0 # Default to no selection
 
 selected_node = st.sidebar.selectbox(
     "Select a node to highlight neighbors:",
@@ -160,11 +133,34 @@ def create_interactive_graph(graph, selected_node, layout_option, hide_sources):
 
     physics_options = ""
     if layout_option == "Hierarchical":
-        physics_options = """{"layout": {"hierarchical": {"enabled": true, "sortMethod": "hubsize"}}, "physics": {"solver": "hierarchicalRepulsion"}}"""
+        physics_options = """
+        {
+            "layout": {
+                "hierarchical": {
+                    "enabled": true,
+                    "sortMethod": "hubsize"
+                }
+            },
+            "physics": {
+                "solver": "hierarchicalRepulsion"
+            }
+        }
+        """
     elif layout_option in ["Kamada-Kawai", "Fruchterman-Reingold"]:
         physics_options = """{ "physics": { "enabled": false } }"""
     else:
-        physics_options = """{"physics": {"forceAtlas2Based": {"gravitationalConstant": -50, "centralGravity": 0.01}, "solver": "forceAtlas2Based"}}"""
+        physics_options = """
+        {
+            "physics": {
+                "forceAtlas2Based": {
+                    "gravitationalConstant": -50,
+                    "centralGravity": 0.01
+                },
+                "solver": "forceAtlas2Based"
+            }
+        }
+        """
+    # Pass the raw JSON string to the options, not a JS assignment
     net.set_options(physics_options)
     
     node_to_community = get_greedy_modularity_communities(graph) if layout_option == "Community Detection (Greedy Modularity)" else {}
@@ -175,6 +171,7 @@ def create_interactive_graph(graph, selected_node, layout_option, hide_sources):
         predecessors = {p for p in predecessors if graph.in_degree(p) > 0}
     successors = set(graph.successors(selected_node)) if selected_node else set()
 
+    # Colors and node addition logic
     for node in graph.nodes():
         node_kwargs = {'label': node}
         if pos.get(node):
@@ -216,6 +213,7 @@ try:
     with open(file_path, 'r', encoding='utf-8') as f:
         html_code = f.read()
 
+    # Add click handler and display
     final_html = inject_click_handler(html_code)
     components.html(final_html, height=800, scrolling=True)
 except Exception as e:

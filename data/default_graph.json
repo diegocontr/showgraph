@@ -1,0 +1,113 @@
+{
+    "directed": true,
+    "multigraph": false,
+    "graph": {},
+    "nodes": [
+        {
+            "id": "A"
+        },
+        {
+            "id": "B"
+        },
+        {
+            "id": "C"
+        },
+        {
+            "id": "D"
+        },
+        {
+            "id": "E"
+        },
+        {
+            "id": "F"
+        },
+        {
+            "id": "G"
+        },
+        {
+            "id": "H"
+        },
+        {
+            "id": "I"
+        },
+        {
+            "id": "J"
+        },
+        {
+            "id": "K"
+        },
+        {
+            "id": "L"
+        },
+        {
+            "id": "M"
+        }
+    ],
+    "links": [
+        {
+            "weight": 2.96,
+            "source": "A",
+            "target": "B"
+        },
+        {
+            "weight": 1.3,
+            "source": "A",
+            "target": "C"
+        },
+        {
+            "weight": 3.36,
+            "source": "B",
+            "target": "D"
+        },
+        {
+            "weight": 2.07,
+            "source": "C",
+            "target": "D"
+        },
+        {
+            "weight": 4.9,
+            "source": "C",
+            "target": "M"
+        },
+        {
+            "weight": 2.13,
+            "source": "D",
+            "target": "E"
+        },
+        {
+            "weight": 4.53,
+            "source": "E",
+            "target": "F"
+        },
+        {
+            "weight": 1.18,
+            "source": "E",
+            "target": "G"
+        },
+        {
+            "weight": 4.44,
+            "source": "F",
+            "target": "H"
+        },
+        {
+            "weight": 2.06,
+            "source": "I",
+            "target": "J"
+        },
+        {
+            "weight": 3.83,
+            "source": "J",
+            "target": "A"
+        },
+        {
+            "weight": 2.29,
+            "source": "K",
+            "target": "A"
+        },
+        {
+            "weight": 3.26,
+            "source": "L",
+            "target": "C"
+        }
+    ]
+}
