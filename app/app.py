@@ -40,7 +40,7 @@ def inject_click_handler(html_source):
     return html_source.replace("</body>", js_code + "</body>")
 
 # --- Graph Loading and Setup ---
-def setup_default_graph(data_folder="data", filename="default_graph.json"):
+def setup_default_graph(data_folder="app/data", filename="default_graph.json"):
     """Creates a default graph JSON file if it doesn't exist."""
     file_path = os.path.join(data_folder, filename)
     if not os.path.exists(file_path):
@@ -95,7 +95,7 @@ if clicked_node:
 st.sidebar.header("Controls")
 
 # Widget to select graph file
-data_dir = "data"
+data_dir = "app/data"
 os.makedirs(data_dir, exist_ok=True)
 json_files = [f for f in os.listdir(data_dir) if f.endswith('.json')]
 if not json_files:
