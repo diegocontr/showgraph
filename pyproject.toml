@@ -1,0 +1,16 @@
+[project]
+name = "show_graph"
+version = "0.1.0"
+description = "A streamlit project to show directed graphs"
+authors = [{ name = "Diego Contreras", email = "diego.a.contr@gmail.com" }]
+dependencies = [
+    "networkx>=3.5",
+    "pyvis>=0.3.2",
+    "scipy>=1.16.0",
+    "streamlit",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+]
