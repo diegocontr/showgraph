@@ -120,7 +120,7 @@ st.sidebar.subheader("Display Options")
 
 layout_option = st.sidebar.selectbox(
     "Graph Layout:",
-    ["From Pre-calculated Layout", "Default Physics (ForceAtlas2)", "Community Detection (Greedy Modularity)", "Hierarchical", "Kamada-Kawai", "Fruchterman-Reingold"],
+    ["Default Physics (ForceAtlas2)", "From Pre-calculated Layout",  "Community Detection (Greedy Modularity)", "Hierarchical", "Kamada-Kawai", "Fruchterman-Reingold"],
     key="layout_option",
     help="Pre-calculated is faster. Other layouts are dynamic or calculated on the fly."
 )
@@ -132,6 +132,12 @@ hide_sources = st.sidebar.toggle(
     "Hide source nodes",
     value=False,
     help="Hide nodes that have no incoming edges in the full graph."
+)
+
+simplify_chains = st.sidebar.toggle(
+    "Simplify linear chains",
+    value=False,
+    help="Hide nodes in simple A->B->C chains."
 )
 
 # --- New: neighbor traversal dropdowns ---
@@ -149,7 +155,7 @@ if selected_node:
             st.rerun()
 
 # --- Graph Visualization ---
-def create_ego_graph_view(full_graph, center_node, out_radius_hops, in_radius_hops, hide_source_nodes, layout):
+def create_ego_graph_view(full_graph, center_node, out_radius_hops, in_radius_hops, hide_source_nodes, layout, simplify_chains=False):
     if not center_node or center_node not in full_graph:
         return Network(height='750px', width='100%', bgcolor='#222222', font_color='white')
 
@@ -169,6 +175,32 @@ def create_ego_graph_view(full_graph, center_node, out_radius_hops, in_radius_ho
         nodes_to_remove = [node for node in combined_g.nodes() if full_graph.in_degree(node) == 0 and node != center_node]
         combined_g.remove_nodes_from(nodes_to_remove)
     
+    if simplify_chains:
+        while True:
+            simplified_in_pass = False
+            # Iterate over a copy of nodes as the graph will be modified
+            for n in list(combined_g.nodes()):
+                
+                # Conditions for simplification
+                is_candidate = (
+                    n != center_node and
+                    combined_g.in_degree(n) == 1 and
+                    combined_g.out_degree(n) == 1
+                )
+                
+                if is_candidate:
+                    pred = list(combined_g.predecessors(n))[0]
+                    succ = list(combined_g.successors(n))[0]
+                    
+                    # Don't simplify if it creates a self-loop
+                    if pred != succ:
+                        combined_g.add_edge(pred, succ)
+                        combined_g.remove_node(n)
+                        simplified_in_pass = True
+            
+            if not simplified_in_pass:
+                break
+
     net = Network(height='750px', width='100%', bgcolor='#222222', font_color='white', directed=True, cdn_resources='in_line')
     
     # --- Layout and Physics Configuration ---
@@ -256,7 +288,7 @@ if not selected_node:
 else:
     st.markdown(f"### Exploring Neighborhood of **{selected_node}**")
 
-net_viz = create_ego_graph_view(G, selected_node, out_radius, in_radius, hide_sources, layout_option)
+net_viz = create_ego_graph_view(G, selected_node, out_radius, in_radius, hide_sources, layout_option, simplify_chains)
 
 # --- Graph Rendering ---
 try:
@@ -265,6 +297,26 @@ try:
 except Exception as e:
     st.error(f"An error occurred while displaying the graph: {e}")
 
+# --- New: Interactive neighbor buttons ---
+# if selected_node:
+#     out_nbrs = sorted(G.successors(selected_node))
+#     in_nbrs  = sorted(G.predecessors(selected_node))
+
+#     st.sidebar.markdown("---")
+#     st.sidebar.subheader("Jump to Neighbor")
+#     with st.sidebar.expander("Outgoing neighbors"):
+#         for nbr in out_nbrs:
+#             if st.button(f"→ {nbr}", key=f"out_{nbr}"):
+#                 st.session_state.selected_node = nbr
+#                 st.session_state.search_query = nbr
+#                 st.rerun()
+
+#     with st.sidebar.expander("Incoming neighbors"):
+#         for nbr in in_nbrs:
+#             if st.button(f"← {nbr}", key=f"in_{nbr}"):
+#                 st.session_state.selected_node = nbr
+#                 st.session_state.search_query = nbr
+#                 st.rerun()
 
 # --- Instructions and Info ---
 st.markdown("---")
