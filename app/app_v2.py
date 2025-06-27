@@ -63,6 +63,12 @@ if st.session_state.get('traverse_in'):
     st.session_state.selected_node = sel
     st.session_state.search_query = sel
     st.session_state.traverse_in = ''
+# Handle navigation from right panel buttons
+if st.session_state.get('nav_to_node'):
+    sel = st.session_state.nav_to_node
+    st.session_state.selected_node = sel
+    st.session_state.search_query = sel
+    st.session_state.nav_to_node = ''
 
 st.sidebar.markdown("---")
 
@@ -307,15 +313,87 @@ if not selected_node:
     st.info("Search for a node in the sidebar to begin exploring the graph.")
 else:
     st.markdown(f"### Exploring Neighborhood of **{selected_node}**")
-
-net_viz = create_ego_graph_view(G, selected_node, out_radius, in_radius, hide_sources, layout_option, simplify_chains, selected_attrs)
-
-# --- Graph Rendering ---
-try:
-    html_code = net_viz.generate_html()
-    components.html(html_code, height=800, scrolling=True)
-except Exception as e:
-    st.error(f"An error occurred while displaying the graph: {e}")
+    
+    # Create columns for graph and navigation panel
+    graph_col, nav_col = st.columns([3, 1])
+    
+    with graph_col:
+        net_viz = create_ego_graph_view(G, selected_node, out_radius, in_radius, hide_sources, layout_option, simplify_chains, selected_attrs)
+        
+        # --- Graph Rendering ---
+        try:
+            html_code = net_viz.generate_html()
+            components.html(html_code, height=800, scrolling=True)
+        except Exception as e:
+            st.error(f"An error occurred while displaying the graph: {e}")
+    
+    with nav_col:
+        st.markdown("#### Navigate to:")
+        
+        # Get neighbors
+        out_nbrs = sorted(G.successors(selected_node))
+        in_nbrs = sorted(G.predecessors(selected_node))
+        
+        # Helper function to get node color based on type
+        def get_node_color(node, is_outgoing, is_incoming):
+            if is_incoming and is_outgoing:
+                return "#9933ff"  # Both paths (purple)
+            elif is_incoming:
+                return "#33cc33"  # Incoming path (green)
+            elif is_outgoing:
+                return "#ffaa00"  # Outgoing path (orange)
+            else:
+                return "#66a3ff"  # Default (blue)
+        
+        # Create sets for efficient lookup
+        out_set = set(out_nbrs)
+        in_set = set(in_nbrs)
+        
+        # Display outgoing neighbors
+        if out_nbrs:
+            st.markdown("**Outgoing Neighbors:**")
+            for nbr in out_nbrs:
+                is_both = nbr in in_set
+                color = get_node_color(nbr, True, is_both)
+                
+                # Create columns for colored indicator and button
+                col1, col2 = st.columns([0.1, 0.9])
+                with col1:
+                    st.markdown(f"<span style='color:{color}; font-size: 16px;'>●</span>", unsafe_allow_html=True)
+                with col2:
+                    if st.button(f"→ {nbr}", key=f"out_nav_{nbr}", help=f"Navigate to {nbr}", use_container_width=True):
+                        st.session_state.nav_to_node = nbr
+                        st.rerun()
+        
+        # Display incoming neighbors
+        if in_nbrs:
+            st.markdown("**Incoming Neighbors:**")
+            for nbr in in_nbrs:
+                is_both = nbr in out_set
+                color = get_node_color(nbr, is_both, True)
+                
+                # Create columns for colored indicator and button
+                col1, col2 = st.columns([0.1, 0.9])
+                with col1:
+                    st.markdown(f"<span style='color:{color}; font-size: 16px;'>●</span>", unsafe_allow_html=True)
+                with col2:
+                    if st.button(f"← {nbr}", key=f"in_nav_{nbr}", help=f"Navigate to {nbr}", use_container_width=True):
+                        st.session_state.nav_to_node = nbr
+                        st.rerun()
+        
+        if not out_nbrs and not in_nbrs:
+            st.info("No connected neighbors found.")
+        
+        # Add a small legend for the navigation panel
+        st.markdown("---")
+        st.markdown("**Colors:**")
+        st.markdown("""
+        <div style="font-size: 12px;">
+        <span style='color:#ffaa00;'>●</span> Outgoing<br>
+        <span style='color:#33cc33;'>●</span> Incoming<br>
+        <span style='color:#9933ff;'>●</span> Both
+        </div>
+        """, unsafe_allow_html=True)
 
 # --- New: Interactive neighbor buttons ---
 # if selected_node:
@@ -346,6 +424,7 @@ with col1:
     st.markdown("""
     - **Search & Select:** Find a node to focus on.
     - **Traverse:** Double-click any node in the view to make it the new focus.
+    - **Navigate:** Use the right panel buttons to jump to connected neighbors.
     - **Layout:** Choose a pre-calculated static layout or a dynamic one.
     """)
 with col2:
