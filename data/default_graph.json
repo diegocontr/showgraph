@@ -4,43 +4,121 @@
     "graph": {},
     "nodes": [
         {
-            "id": "A"
+            "id": "A",
+            "label": "module_A.py",
+            "lines_of_code": 451,
+            "cyclomatic_complexity": 12.3,
+            "function_count": 8,
+            "class_count": 2,
+            "docstring": "This is the auto-generated docstring for A."
         },
         {
-            "id": "B"
+            "id": "B",
+            "label": "module_B.py",
+            "lines_of_code": 234,
+            "cyclomatic_complexity": 5.1,
+            "function_count": 4,
+            "class_count": 1,
+            "docstring": "This is the auto-generated docstring for B."
         },
         {
-            "id": "C"
+            "id": "C",
+            "label": "module_C.py",
+            "lines_of_code": 678,
+            "cyclomatic_complexity": 15.6,
+            "function_count": 10,
+            "class_count": 3,
+            "docstring": "This is the auto-generated docstring for C."
         },
         {
-            "id": "D"
+            "id": "D",
+            "label": "module_D.py",
+            "lines_of_code": 123,
+            "cyclomatic_complexity": 3.4,
+            "function_count": 2,
+            "class_count": 1,
+            "docstring": "This is the auto-generated docstring for D."
         },
         {
-            "id": "E"
+            "id": "E",
+            "label": "module_E.py",
+            "lines_of_code": 567,
+            "cyclomatic_complexity": 9.8,
+            "function_count": 6,
+            "class_count": 2,
+            "docstring": "This is the auto-generated docstring for E."
         },
         {
-            "id": "F"
+            "id": "F",
+            "label": "module_F.py",
+            "lines_of_code": 345,
+            "cyclomatic_complexity": 7.2,
+            "function_count": 5,
+            "class_count": 1,
+            "docstring": "This is the auto-generated docstring for F."
         },
         {
-            "id": "G"
+            "id": "G",
+            "label": "module_G.py",
+            "lines_of_code": 234,
+            "cyclomatic_complexity": 4.8,
+            "function_count": 3,
+            "class_count": 1,
+            "docstring": "This is the auto-generated docstring for G."
         },
         {
-            "id": "H"
+            "id": "H",
+            "label": "module_H.py",
+            "lines_of_code": 456,
+            "cyclomatic_complexity": 11.1,
+            "function_count": 7,
+            "class_count": 2,
+            "docstring": "This is the auto-generated docstring for H."
         },
         {
-            "id": "I"
+            "id": "I",
+            "label": "module_I.py",
+            "lines_of_code": 345,
+            "cyclomatic_complexity": 6.5,
+            "function_count": 4,
+            "class_count": 1,
+            "docstring": "This is the auto-generated docstring for I."
         },
         {
-            "id": "J"
+            "id": "J",
+            "label": "module_J.py",
+            "lines_of_code": 678,
+            "cyclomatic_complexity": 14.2,
+            "function_count": 9,
+            "class_count": 3,
+            "docstring": "This is the auto-generated docstring for J."
         },
         {
-            "id": "K"
+            "id": "K",
+            "label": "module_K.py",
+            "lines_of_code": 123,
+            "cyclomatic_complexity": 3.1,
+            "function_count": 2,
+            "class_count": 1,
+            "docstring": "This is the auto-generated docstring for K."
         },
         {
-            "id": "L"
+            "id": "L",
+            "label": "module_L.py",
+            "lines_of_code": 456,
+            "cyclomatic_complexity": 10.5,
+            "function_count": 8,
+            "class_count": 2,
+            "docstring": "This is the auto-generated docstring for L."
         },
         {
-            "id": "M"
+            "id": "M",
+            "label": "module_M.py",
+            "lines_of_code": 789,
+            "cyclomatic_complexity": 18.7,
+            "function_count": 12,
+            "class_count": 4,
+            "docstring": "This is the auto-generated docstring for M."
         }
     ],
     "links": [

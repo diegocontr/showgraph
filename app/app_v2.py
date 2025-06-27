@@ -15,29 +15,6 @@ st.write("This app is designed for large graphs. Search for a node, then double-
 
 
 # --- Graph Loading and Setup ---
-def setup_default_graph(data_folder="data", filename="large_default_graph.json"):
-    """Creates a large default graph JSON file if it doesn't exist."""
-    file_path = os.path.join(data_folder, filename)
-    if not os.path.exists(file_path):
-        st.info(f"Creating a large default graph file at '{file_path}' (300 nodes)...")
-        os.makedirs(data_folder, exist_ok=True)
-        
-        G_sample = nx.fast_gnp_random_graph(n=300, p=0.015, seed=42, directed=True)
-        mapping = {i: f"Node-{i}" for i in G_sample.nodes()}
-        G_sample = nx.relabel_nodes(G_sample, mapping)
-
-        pos = nx.spring_layout(G_sample, seed=42)
-        
-        for node in G_sample.nodes():
-             G_sample.nodes[node]['x'] = pos[node][0] * 1500
-             G_sample.nodes[node]['y'] = pos[node][1] * 1500
-             G_sample.nodes[node]['label'] = node
-
-        graph_json = json_graph.node_link_data(G_sample)
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(graph_json, f, indent=4)
-    return file_path
-
 @st.cache_data
 def load_graph(file_path):
     """Loads a graph from a node-link JSON file."""
@@ -48,12 +25,19 @@ def load_graph(file_path):
 # --- Sidebar Controls ---
 st.sidebar.header("Controls")
 
-data_dir = "data"
+# Correctly locate the data folder relative to the project root
+# The script is in app/, so we go up one level to the project root.
+script_dir = os.path.dirname(__file__)
+project_root = os.path.abspath(os.path.join(script_dir, '..'))
+data_dir = os.path.join(project_root, "data")
+
 os.makedirs(data_dir, exist_ok=True)
 json_files = [f for f in os.listdir(data_dir) if f.endswith('.json')]
+
 if not json_files:
-    setup_default_graph(data_dir)
-    json_files = [f for f in os.listdir(data_dir) if f.endswith('.json')]
+    st.error("No graph JSON files found in the 'data' directory.")
+    st.info("To get started, run the data generation script from your terminal: `python app/create_default_graph.py`")
+    st.stop()
 
 selected_file = st.sidebar.selectbox("Select a graph file:", json_files, key="selected_file_widget")
 
@@ -140,6 +124,25 @@ simplify_chains = st.sidebar.toggle(
     help="Hide nodes in simple A->B->C chains."
 )
 
+# --- New: Attribute Selection ---
+st.sidebar.markdown("---")
+st.sidebar.subheader("Attribute Display")
+available_attrs = []
+if G.nodes:
+    # Get attributes from a sample node, assuming they are consistent
+    sample_node = list(G.nodes())[0]
+    # Attributes to exclude from the list (used for visualization)
+    excluded_attrs = {'x', 'y', 'label', 'id', 'size', 'color', 'physics', 'title'}
+    available_attrs = sorted([attr for attr in G.nodes[sample_node] if attr not in excluded_attrs])
+
+selected_attrs = st.sidebar.multiselect(
+    "Show attributes on hover:",
+    options=available_attrs,
+    default=[],
+    help="Select which node attributes to show in the tooltip."
+)
+
+
 # --- New: neighbor traversal dropdowns ---
 if selected_node:
     out_nbrs = sorted(G.successors(selected_node))
@@ -155,9 +158,12 @@ if selected_node:
             st.rerun()
 
 # --- Graph Visualization ---
-def create_ego_graph_view(full_graph, center_node, out_radius_hops, in_radius_hops, hide_source_nodes, layout, simplify_chains=False):
+def create_ego_graph_view(full_graph, center_node, out_radius_hops, in_radius_hops, hide_source_nodes, layout, simplify_chains=False, attributes_to_show=None):
     if not center_node or center_node not in full_graph:
         return Network(height='750px', width='100%', bgcolor='#222222', font_color='white')
+
+    if attributes_to_show is None:
+        attributes_to_show = []
 
     out_ego_g = nx.DiGraph()
     if out_radius_hops > 0:
@@ -250,7 +256,8 @@ def create_ego_graph_view(full_graph, center_node, out_radius_hops, in_radius_ho
         # Determine node color
         if community_map and node in community_colors:
             color = community_colors[node]
-            if is_center: color = "#ff4d4d" # Keep center node distinct
+            if is_center:
+                color = "#ff4d4d" # Keep center node distinct
         else:
             color = "#ff4d4d" if is_center else ("#9933ff" if node in in_nodes and node in out_nodes else ("#33cc33" if node in in_nodes else ("#ffaa00" if node in out_nodes else "#66a3ff")))
         
@@ -268,9 +275,22 @@ def create_ego_graph_view(full_graph, center_node, out_radius_hops, in_radius_ho
         elif layout == "Hierarchical":
             node_physics = True
 
+        # --- Build hover tooltip ---
+        # Create a plain text title, as HTML was not rendering correctly.
+        # Pyvis/vis.js should convert newlines to <br> tags automatically.
+        title = str(attrs.get('label', node))
+        if attributes_to_show:
+            details = []
+            for attr_key in attributes_to_show:
+                attr_val = full_graph.nodes[node].get(attr_key, 'N/A')
+                details.append(f"{attr_key.replace('_', ' ').title()}: {attr_val}")
+            if details:
+                title += "\n---\n" + "\n".join(details)
+
         net.add_node(
             node,
             label=attrs.get('label', node),
+            title=title,
             x=pos_x,
             y=pos_y,
             color=color,
@@ -288,7 +308,7 @@ if not selected_node:
 else:
     st.markdown(f"### Exploring Neighborhood of **{selected_node}**")
 
-net_viz = create_ego_graph_view(G, selected_node, out_radius, in_radius, hide_sources, layout_option, simplify_chains)
+net_viz = create_ego_graph_view(G, selected_node, out_radius, in_radius, hide_sources, layout_option, simplify_chains, selected_attrs)
 
 # --- Graph Rendering ---
 try:
